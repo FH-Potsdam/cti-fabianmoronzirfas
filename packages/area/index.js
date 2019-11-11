@@ -10,7 +10,7 @@ const step = 25;
 const border = 12.5;
 let areas = [];
 function setup() {
-  canvas = createCanvas(125, 125);
+  canvas = createCanvas(500, 500);
   rectMode(CENTER);
   canvas.parent("sketch");
   for (let x = step / 2 + border; x <= width - step / 2 - border; x += step) {
