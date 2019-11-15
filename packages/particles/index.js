@@ -1,30 +1,49 @@
 /**
- * @todo How to constrain the particle to the screen?
- * @todo How to give an particle a live time?
- * @todo How to create a new particle after 50 frames?
- * @todo How to give the particle an on click action?
+ * @todo How to constrain the particle to the screen? ✓
+ * @todo How to give an particle a live time? ✓
+ * @todo How to create a new particle after 50 frames? ✓
+ * @todo How to give the particle an on click action? ✓
  */
 let canvas = undefined;
 let jim = undefined;
 const agents = [];
 function setup() {
-  canvas = createCanvas(100, 100);
+  canvas = createCanvas(500, 500);
   canvas.parent("sketch");
   jim = new Agent(random(width), random(height));
   // Agent().display(); will throw an error
 }
 
 function draw() {
-  jim.update();
+  // background(210.5);
+  if (frameCount % 50 === 0) {
+    agents.push(
+      new Agent(
+        random(mouseX - 10, mouseX + 10),
+        random(mouseY - 10, mouseY + 10),
+      ),
+    );
+  }
+  jim.update(mouseX, mouseY);
   jim.display();
   for (const item of agents) {
-    item.update();
+    item.update(mouseX, mouseY);
     item.display();
+  }
+  for (let i = agents.length - 1; i >= 0; i--) {
+    if (agents[i].isDead === true) {
+      agents.splice(i, 1);
+    }
   }
 }
 
 function mousePressed() {
-  agents.push(new Agent(mouseX, mouseY));
+  // agents.push(new Agent(mouseX, mouseY));
+  for (const item of agents) {
+    if (item.isOver === true) {
+      item.w = item.w + 0.5;
+    }
+  }
 }
 function mouseDragged() {
   agents.push(new Agent(mouseX, mouseY));
@@ -55,15 +74,39 @@ function Agent(x, y) {
 
   this.x = x;
   this.y = y;
+  this.w = 7;
+  this.lifetime = 100;
+  this.alphaSteps = 255 / this.lifetime;
+  this.isDead = false;
+  this.alpha = 255;
+  this.isOver = false;
 
   /**
    * If you want the fancy noise driven movement remove
    * this update function
    */
-  this.update = function() {
-    this.x = this.x + random(-1, 1);
-    this.y = this.y + random(-1, 1);
+  this.update = function(mx, my) {
+    this.x = this.x + random(-0.5, 0.5);
+    this.y = this.y + random(-0.5, 0.5);
     // constrain him to the canvas
+    const d = dist(this.x, this.y, mx, my);
+    if (d < this.w / 2) {
+      console.log(d);
+      this.isOver = true;
+      this.lifetime++;
+    } else {
+      this.isOver = false;
+    }
+
+    this.x = constrain(this.x, 0, width);
+    this.y = constrain(this.y, 0, height);
+
+    this.lifetime--;
+    this.alpha = this.alphaSteps * this.lifetime;
+
+    if (this.lifetime <= 0) {
+      this.isDead = true;
+    }
   };
 
   /**
@@ -94,8 +137,13 @@ function Agent(x, y) {
 
   this.display = function() {
     strokeWeight(2);
-    stroke(0);
-    fill(255);
-    ellipse(this.x, this.y, 5);
+    // if (this.isOver === true) {
+    // fill("#ff6347");
+    // stroke("#00ff00");
+    // } else {
+    stroke(0, this.alpha);
+    fill(255, this.alpha);
+    // }
+    ellipse(this.x, this.y, this.w);
   };
 }
